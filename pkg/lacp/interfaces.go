@@ -2,12 +2,12 @@ package lacp
 
 import (
 	"context"
-	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/flags"
 	"sync"
 	"time"
 
 	"github.com/vishvananda/netlink"
 
+	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/flags"
 	"github.com/mlguerrero12/pf-status-relay/pkg/log"
 )
 
@@ -101,9 +101,12 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 			wg.Done()
 		}()
 
+		ticker := time.NewTicker(time.Duration(pollingInterval) * time.Millisecond)
+		defer ticker.Stop()
+
 		for {
 			select {
-			case <-time.Tick(time.Duration(pollingInterval) * time.Millisecond):
+			case <-ticker.C:
 				var monitorWg sync.WaitGroup
 				for _, pf := range i.PFs {
 					monitorWg.Add(1)
@@ -158,7 +161,7 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 									if vf.LinkState == netlink.VF_LINK_STATE_DISABLE {
 										err = netlink.LinkSetVfState(link, vf.ID, netlink.VF_LINK_STATE_AUTO)
 										if err != nil {
-											log.Log.Error("failed to set vf link state", "id", vf.ID, "interace", pf.Name, "error", err)
+											log.Log.Error("failed to set vf link state", "id", vf.ID, "interface", pf.Name, "error", err)
 										}
 										log.Log.Info("vf link state was set", "id", vf.ID, "state", "auto", "interface", pf.Name)
 									}
@@ -194,7 +197,6 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 			}
 		}
 	}()
-
 }
 
 // Indexes returns a list of indexes.
