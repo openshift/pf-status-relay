@@ -1,4 +1,5 @@
-name: go-build-and-unit-tests
+---
+name: test
 on:
   push:
     branches:
@@ -7,10 +8,9 @@ on:
     branches:
       - main
 jobs:
-  build-test:
+  build:
     strategy:
         matrix:
-            go-version: [1.21.x]
             os: [ ubuntu-latest ]
             goos: [ linux ]
             goarch: [amd64, arm64, ppc64le]
@@ -18,19 +18,26 @@ jobs:
     env:
       GO111MODULE: on
     steps:
+      - uses: actions/checkout@v4
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: ${{ matrix.go-version }}
-
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v3
-
+          go-version-file: go.mod
       - name: Build test for ${{ matrix.goarch }}
         env:
           GOARCH: ${{ matrix.goarch }}
           GOOS: ${{ matrix.goos }}
         run: GOARCH="${TARGET}" go build main.go
 
-      - name: Go test
-        run: go test -race ./...
+  test:
+    name: Run tests on Linux amd64
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Run tests
+        run: go test ./...
