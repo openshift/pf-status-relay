@@ -1,0 +1,57 @@
+---
+name: test
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - uses: golangci/golangci-lint-action@v4
+        with:
+          args: -v
+          skip-cache: true
+  build:
+    needs: lint
+    strategy:
+        matrix:
+            os: [ ubuntu-latest ]
+            goos: [ linux ]
+            goarch: [amd64, arm64, ppc64le]
+    runs-on: ${{ matrix.os }}
+    env:
+      GO111MODULE: on
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Build test for ${{ matrix.goarch }}
+        env:
+          GOARCH: ${{ matrix.goarch }}
+          GOOS: ${{ matrix.goos }}
+        run: GOARCH="${TARGET}" go build main.go
+
+  test:
+    name: Run tests on Linux amd64
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version-file: go.mod
+      - name: Run tests
+        run: go test ./...
