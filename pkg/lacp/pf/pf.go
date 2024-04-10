@@ -1,4 +1,4 @@
-package lacp
+package pf
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 
+	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
 	"github.com/mlguerrero12/pf-status-relay/pkg/log"
 )
 
@@ -23,7 +24,9 @@ type PF struct {
 	sync.Mutex
 	Ready bool
 
-	protoState protoState
+	ProtoState protoState
+
+	Nl interfaces.Netlink
 }
 
 type protoState int
@@ -47,7 +50,7 @@ func (p *PF) Inspect() error {
 	}
 
 	// Verify that bond runs in mode 802.3ad.
-	bond, err := netlink.LinkByIndex(p.MasterIndex)
+	bond, err := p.Nl.LinkByIndex(p.MasterIndex)
 	if err != nil {
 		return fmt.Errorf("failed to fetch master interface with index %d: %w", p.MasterIndex, err)
 	}
@@ -63,7 +66,7 @@ func (p *PF) Inspect() error {
 // Update updates the info of the PF when there is an operational state change.
 func (p *PF) Update() (bool, error) {
 	// Fetch link again. Do not use attrs from subscribe since it might be obsolete.
-	link, err := netlink.LinkByIndex(p.Index)
+	link, err := p.Nl.LinkByIndex(p.Index)
 	if err != nil {
 		return false, err
 	}

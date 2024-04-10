@@ -7,20 +7,30 @@ import (
 
 	"github.com/vishvananda/netlink"
 
+	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
 	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/flags"
+	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/pf"
 	"github.com/mlguerrero12/pf-status-relay/pkg/log"
 )
 
-// Interfaces stores the PFs that are inspected.
-type Interfaces struct {
-	PFs map[int]*PF
+// Nics stores the PFs that are inspected.
+type Nics struct {
+	PFs             map[int]*pf.PF
+	queue           <-chan int
+	pollingInterval int
+	nl              interfaces.Netlink
 }
 
-// New returns an Interfaces structure with interfaces that are found in the node.
-func New(nics []string) Interfaces {
-	i := Interfaces{PFs: make(map[int]*PF)}
+// New returns an Nics structure with interfaces that are found in the node.
+func New(nics []string, queue <-chan int, pollingInterval int, nl interfaces.Netlink) Nics {
+	i := Nics{
+		PFs:             make(map[int]*pf.PF),
+		queue:           queue,
+		pollingInterval: pollingInterval,
+		nl:              nl,
+	}
 	for _, name := range nics {
-		link, err := netlink.LinkByName(name)
+		link, err := i.nl.LinkByName(name)
 		if err != nil {
 			log.Log.Warn("failed to fetch interface", "interface", name, "error", err)
 			continue
@@ -28,13 +38,14 @@ func New(nics []string) Interfaces {
 
 		log.Log.Debug("adding interface", "interface", name)
 
-		i.PFs[link.Attrs().Index] = &PF{
+		i.PFs[link.Attrs().Index] = &pf.PF{
 			Name:        link.Attrs().Name,
 			Index:       link.Attrs().Index,
 			OperState:   link.Attrs().OperState,
 			MasterIndex: link.Attrs().MasterIndex,
 
-			protoState: Undefined,
+			ProtoState: pf.Undefined,
+			Nl:         nl,
 		}
 	}
 
@@ -42,7 +53,7 @@ func New(nics []string) Interfaces {
 }
 
 // Inspect inspects interfaces in order to proceed with monitoring.
-func (i *Interfaces) Inspect(ctx context.Context, queue <-chan int, wg *sync.WaitGroup) {
+func (i *Nics) Inspect(ctx context.Context, wg *sync.WaitGroup) {
 	log.Log.Debug("LACP inspection and processing started")
 
 	// Verify that PFs are ready to accept/receive LACPDU messages.
@@ -61,7 +72,7 @@ func (i *Interfaces) Inspect(ctx context.Context, queue <-chan int, wg *sync.Wai
 		defer wg.Done()
 		for {
 			select {
-			case index := <-queue:
+			case index := <-i.queue:
 				log.Log.Debug("processing event", "index", index)
 				p := i.PFs[index]
 				updated, err := p.Update()
@@ -92,7 +103,7 @@ func (i *Interfaces) Inspect(ctx context.Context, queue <-chan int, wg *sync.Wai
 }
 
 // Monitor monitors the LACP protocol on the interfaces.
-func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.WaitGroup) {
+func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 	log.Log.Debug("LACP monitoring started")
 
 	wg.Add(1)
@@ -101,37 +112,37 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 			wg.Done()
 		}()
 
-		ticker := time.NewTicker(time.Duration(pollingInterval) * time.Millisecond)
+		ticker := time.NewTicker(time.Duration(i.pollingInterval) * time.Millisecond)
 		defer ticker.Stop()
 
 		for {
 			select {
 			case <-ticker.C:
 				var monitorWg sync.WaitGroup
-				for _, pf := range i.PFs {
+				for _, p := range i.PFs {
 					monitorWg.Add(1)
-					go func(pf *PF) {
+					go func(p *pf.PF) {
 						defer monitorWg.Done()
 
-						pf.Lock()
-						if !pf.Ready {
-							pf.Unlock()
+						p.Lock()
+						if !p.Ready {
+							p.Unlock()
 							return
 						}
-						pf.Unlock()
+						p.Unlock()
 
-						link, err := netlink.LinkByIndex(pf.Index)
+						link, err := i.nl.LinkByIndex(p.Index)
 						if err != nil {
-							log.Log.Warn("failed to fetch interface", "interface", pf.Name, "error", err)
+							log.Log.Warn("failed to fetch interface", "interface", p.Name, "error", err)
 							return
 						}
 
 						// Stop if interface has no VFs.
 						vfs := link.Attrs().Vfs
 						if len(vfs) == 0 {
-							if pf.protoState != NoVfs {
-								log.Log.Info("interface has no VFs", "interface", pf.Name)
-								pf.protoState = NoVfs
+							if p.ProtoState != pf.NoVfs {
+								log.Log.Info("interface has no VFs", "interface", p.Name)
+								p.ProtoState = pf.NoVfs
 							}
 							return
 						}
@@ -141,53 +152,53 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 						if slave != nil {
 							s, ok := slave.(*netlink.BondSlave)
 							if !ok {
-								log.Log.Error("interface does not have BondSlave type on Slave attribute", "interface", pf.Name)
+								log.Log.Error("interface does not have BondSlave type on Slave attribute", "interface", p.Name)
 								return
 							}
 
 							if flags.IsProtocolUp(s) {
-								if pf.protoState != Up {
-									log.Log.Info("lacp is up", "interface", pf.Name)
-									pf.protoState = Up
+								if p.ProtoState != pf.Up {
+									log.Log.Info("lacp is up", "interface", p.Name)
+									p.ProtoState = pf.Up
 								}
 
 								if !flags.IsFastRate(s) {
-									log.Log.Warn("partner is using slow lacp rate", "interface", pf.Name)
+									log.Log.Warn("partner is using slow lacp rate", "interface", p.Name)
 								}
 
 								// Bring to auto all VFs whose state is disable.
 								for _, vf := range vfs {
-									log.Log.Debug("vf info", "id", vf.ID, "state", vf.LinkState, "interface", pf.Name)
+									log.Log.Debug("vf info", "id", vf.ID, "state", vf.LinkState, "interface", p.Name)
 									if vf.LinkState == netlink.VF_LINK_STATE_DISABLE {
-										err = netlink.LinkSetVfState(link, vf.ID, netlink.VF_LINK_STATE_AUTO)
+										err = i.nl.LinkSetVfState(link, vf.ID, netlink.VF_LINK_STATE_AUTO)
 										if err != nil {
-											log.Log.Error("failed to set vf link state", "id", vf.ID, "interface", pf.Name, "error", err)
+											log.Log.Error("failed to set vf link state", "id", vf.ID, "interface", p.Name, "error", err)
 										}
-										log.Log.Info("vf link state was set", "id", vf.ID, "state", "auto", "interface", pf.Name)
+										log.Log.Info("vf link state was set", "id", vf.ID, "state", "auto", "interface", p.Name)
 									}
 								}
 							} else {
-								if pf.protoState != Down {
-									log.Log.Info("lacp is down", "interface", pf.Name)
-									pf.protoState = Down
+								if p.ProtoState != pf.Down {
+									log.Log.Info("lacp is down", "interface", p.Name)
+									p.ProtoState = pf.Down
 								}
 
 								// Bring to disable all VFs whose state is auto.
 								for _, vf := range vfs {
-									log.Log.Debug("vf info", "id", vf.ID, "state", vf.LinkState, "interface", pf.Name)
+									log.Log.Debug("vf info", "id", vf.ID, "state", vf.LinkState, "interface", p.Name)
 									if vf.LinkState == netlink.VF_LINK_STATE_AUTO {
-										err = netlink.LinkSetVfState(link, vf.ID, netlink.VF_LINK_STATE_DISABLE)
+										err = i.nl.LinkSetVfState(link, vf.ID, netlink.VF_LINK_STATE_DISABLE)
 										if err != nil {
-											log.Log.Error("failed to set vf link state", "id", vf.ID, "interface", pf.Name, "error", err)
+											log.Log.Error("failed to set vf link state", "id", vf.ID, "interface", p.Name, "error", err)
 										}
-										log.Log.Info("vf link state was set", "id", vf.ID, "state", "disable", "interface", pf.Name)
+										log.Log.Info("vf link state was set", "id", vf.ID, "state", "disable", "interface", p.Name)
 									}
 								}
 							}
 						} else {
-							log.Log.Error("interface has no slave attribute", "interface", pf.Name)
+							log.Log.Error("interface has no slave attribute", "interface", p.Name)
 						}
-					}(pf)
+					}(p)
 
 					monitorWg.Wait()
 				}
@@ -200,7 +211,7 @@ func (i *Interfaces) Monitor(ctx context.Context, pollingInterval int, wg *sync.
 }
 
 // Indexes returns a list of indexes.
-func (i *Interfaces) Indexes() []int {
+func (i *Nics) Indexes() []int {
 	indexes := make([]int, 0, len(i.PFs))
 	for index := range i.PFs {
 		indexes = append(indexes, index)

@@ -7,6 +7,8 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/vishvananda/netlink"
+
 	"github.com/mlguerrero12/pf-status-relay/pkg/config"
 	"github.com/mlguerrero12/pf-status-relay/pkg/lacp"
 	"github.com/mlguerrero12/pf-status-relay/pkg/log"
@@ -31,17 +33,17 @@ func main() {
 	var wg sync.WaitGroup
 
 	// Initialize interfaces.
-	pfs := lacp.New(conf.Interfaces)
+	pfs := lacp.New(conf.Interfaces, queue, conf.PollingInterval, &netlink.Handle{})
 	if len(pfs.PFs) == 0 {
 		log.Log.Error("no interfaces found in node")
 		os.Exit(1)
 	}
 
 	// Start inspection.
-	pfs.Inspect(ctx, queue, &wg)
+	pfs.Inspect(ctx, &wg)
 
 	// Start monitoring.
-	pfs.Monitor(ctx, conf.PollingInterval, &wg)
+	pfs.Monitor(ctx, &wg)
 
 	// Start subscription to link changes.
 	err := subscribe.Start(ctx, pfs.Indexes(), queue, &wg)
