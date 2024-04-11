@@ -31,9 +31,9 @@ func (a flags) isOperational() bool {
 	return true
 }
 
-// IsFastRate indicates if the partner is using lacp fast rate.
+// IsFastRate indicates if the actor is using lacp fast rate.
 func IsFastRate(slave *netlink.BondSlave) bool {
-	p := flags(slave.AdPartnerOperPortState)
+	p := flags(slave.AdActorOperPortState)
 
 	return (p & Timeout) != 0
 }

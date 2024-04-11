@@ -165,7 +165,7 @@ func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 								}
 
 								if !flags.IsFastRate(s) {
-									log.Log.Warn("partner is using slow lacp rate", "interface", p.Name)
+									log.Log.Warn("pf is using slow lacp rate", "interface", p.Name)
 								}
 
 								// Bring to auto all VFs whose state is disable.
