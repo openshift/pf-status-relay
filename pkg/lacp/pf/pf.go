@@ -83,7 +83,7 @@ func (p *PF) Update() (bool, error) {
 	p.OperState = link.Attrs().OperState
 	p.MasterIndex = link.Attrs().MasterIndex
 
-	log.Log.Info("PF was updated", "interface", p.Name, "operational state", p.OperState)
+	log.Log.Debug("PF was updated", "interface", p.Name, "operational state", p.OperState)
 
 	return true, nil
 }
