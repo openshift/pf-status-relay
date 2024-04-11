@@ -143,7 +143,7 @@ func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 						vfs := link.Attrs().Vfs
 						if len(vfs) == 0 {
 							if p.ProtoState != pf.NoVfs {
-								log.Log.Info("interface has no VFs", "interface", p.Name)
+								log.Log.Info("pf has no VFs", "interface", p.Name)
 								p.ProtoState = pf.NoVfs
 							}
 							return
