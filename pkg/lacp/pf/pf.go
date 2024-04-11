@@ -46,7 +46,7 @@ func (p *PF) Inspect() error {
 
 	// Verify that link has a master.
 	if p.MasterIndex == 0 {
-		return fmt.Errorf("no master interface found")
+		return fmt.Errorf("link has no master interface")
 	}
 
 	// Verify that bond runs in mode 802.3ad.
@@ -83,7 +83,7 @@ func (p *PF) Update() (bool, error) {
 	p.OperState = link.Attrs().OperState
 	p.MasterIndex = link.Attrs().MasterIndex
 
-	log.Log.Info("PF was updated", "interface", p.Name, "operational state", p.OperState)
+	log.Log.Debug("PF was updated", "interface", p.Name, "operational state", p.OperState)
 
 	return true, nil
 }

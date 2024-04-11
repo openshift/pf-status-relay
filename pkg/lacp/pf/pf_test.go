@@ -59,7 +59,7 @@ var _ = Describe("PF", func() {
 				pf.MasterIndex = 0
 				err := pf.Inspect()
 				Expect(err).To(HaveOccurred())
-				Expect(err.Error()).To(Equal("no master interface found"))
+				Expect(err.Error()).To(Equal("link has no master interface"))
 			})
 		})
 
