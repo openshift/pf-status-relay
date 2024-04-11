@@ -60,9 +60,10 @@ func (i *Nics) Inspect(ctx context.Context, wg *sync.WaitGroup) {
 	for _, p := range i.PFs {
 		err := p.Inspect()
 		if err != nil {
-			log.Log.Error("interface not ready", "interface", p.Name, "error", err)
+			log.Log.Error("pf is not ready", "interface", p.Name, "error", err)
 			continue
 		}
+		log.Log.Info("pf is ready", "interface", p.Name)
 		p.Ready = true
 	}
 
@@ -84,12 +85,13 @@ func (i *Nics) Inspect(ctx context.Context, wg *sync.WaitGroup) {
 				if updated {
 					err = p.Inspect()
 					if err != nil {
-						log.Log.Error("interface not ready after update", "interface", p.Name, "error", err)
 						p.Lock()
+						log.Log.Error("pf is not ready", "interface", p.Name, "error", err)
 						p.Ready = false
 						p.Unlock()
 					} else {
 						p.Lock()
+						log.Log.Info("pf is ready", "interface", p.Name)
 						p.Ready = true
 						p.Unlock()
 					}
