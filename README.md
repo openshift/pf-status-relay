@@ -36,7 +36,7 @@ The application is configured using a YAML file located in `"/etc/pf-status-rela
 
 This application can be installed in a Kubernetes cluster using a DaemonSet and a ConfigMap.
 
-### Steps
+#### Steps
 
 1. **Build or pull the container image**
 
@@ -110,6 +110,32 @@ This application can be installed in a Kubernetes cluster using a DaemonSet and 
            configMap:
              name: pf-status-relay-config
    ```
+
+### Running the application
+The following logs show how the link state of VFs is adjusted when LACPDU messages are intentionally blocked and unblocked on `ens6f0np0`.
+
+```text
+[root@cnfdr28-installer ~]# oc logs -f -n default pf-status-relay-daemon-gcp5w 
+{"time":"2024-04-11T14:42:18.27643209Z","level":"INFO","msg":"Starting application"}
+{"time":"2024-04-11T14:42:18.278692289Z","level":"INFO","msg":"pf is ready","interface":"eno12409"}
+{"time":"2024-04-11T14:42:18.278752729Z","level":"INFO","msg":"pf is ready","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:18.278796494Z","level":"INFO","msg":"pf is ready","interface":"ens6f1np1"}
+{"time":"2024-04-11T14:42:18.779615931Z","level":"INFO","msg":"lacp is up","interface":"eno12409"}
+{"time":"2024-04-11T14:42:18.780551092Z","level":"INFO","msg":"lacp is up","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:18.781445769Z","level":"INFO","msg":"lacp is up","interface":"ens6f1np1"}
+{"time":"2024-04-11T14:42:59.280236361Z","level":"INFO","msg":"lacp is down","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:59.28169901Z","level":"INFO","msg":"vf link state was set","id":0,"state":"disable","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:59.283745766Z","level":"INFO","msg":"vf link state was set","id":1,"state":"disable","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:59.285930289Z","level":"INFO","msg":"vf link state was set","id":2,"state":"disable","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:59.288096054Z","level":"INFO","msg":"vf link state was set","id":3,"state":"disable","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:42:59.289469469Z","level":"INFO","msg":"vf link state was set","id":4,"state":"disable","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.780785003Z","level":"INFO","msg":"lacp is up","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.782278877Z","level":"INFO","msg":"vf link state was set","id":0,"state":"auto","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.7838518Z","level":"INFO","msg":"vf link state was set","id":1,"state":"auto","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.786163397Z","level":"INFO","msg":"vf link state was set","id":2,"state":"auto","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.79731161Z","level":"INFO","msg":"vf link state was set","id":3,"state":"auto","interface":"ens6f0np0"}
+{"time":"2024-04-11T14:44:38.799904792Z","level":"INFO","msg":"vf link state was set","id":4,"state":"auto","interface":"ens6f0np0"}
+```
 
 ## Contributing
 Contributions to this project are welcomed! If you encounter any issues or have suggestions for improvements, please feel free to submit a pull request or open an issue on GitHub.
