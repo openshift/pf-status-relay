@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/log"
+	"github.com/openshift/pf-status-relay/pkg/log"
 )
 
 var path = "/etc/pf-status-relay/config.yaml"

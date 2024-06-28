@@ -6,8 +6,8 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
-	"github.com/mlguerrero12/pf-status-relay/pkg/log"
+	"github.com/openshift/pf-status-relay/pkg/interfaces"
+	"github.com/openshift/pf-status-relay/pkg/log"
 )
 
 // PF contains information about the physical function as well as a context to manage lacp monitoring.

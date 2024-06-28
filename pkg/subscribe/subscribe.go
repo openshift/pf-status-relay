@@ -6,7 +6,7 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/log"
+	"github.com/openshift/pf-status-relay/pkg/log"
 )
 
 // Start starts subscription to link changes.

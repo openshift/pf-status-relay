@@ -7,10 +7,10 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
-	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/flags"
-	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/pf"
-	"github.com/mlguerrero12/pf-status-relay/pkg/log"
+	"github.com/openshift/pf-status-relay/pkg/interfaces"
+	"github.com/openshift/pf-status-relay/pkg/lacp/flags"
+	"github.com/openshift/pf-status-relay/pkg/lacp/pf"
+	"github.com/openshift/pf-status-relay/pkg/log"
 )
 
 // Nics stores the PFs that are inspected.

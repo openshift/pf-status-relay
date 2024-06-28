@@ -6,7 +6,7 @@ import (
 	"github.com/vishvananda/netlink"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
+	"github.com/openshift/pf-status-relay/pkg/interfaces"
 )
 
 var _ = Describe("PF", func() {
