@@ -9,10 +9,10 @@ import (
 
 	"github.com/vishvananda/netlink"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/config"
-	"github.com/mlguerrero12/pf-status-relay/pkg/lacp"
-	"github.com/mlguerrero12/pf-status-relay/pkg/log"
-	"github.com/mlguerrero12/pf-status-relay/pkg/subscribe"
+	"github.com/openshift/pf-status-relay/pkg/config"
+	"github.com/openshift/pf-status-relay/pkg/lacp"
+	"github.com/openshift/pf-status-relay/pkg/log"
+	"github.com/openshift/pf-status-relay/pkg/subscribe"
 )
 
 func main() {

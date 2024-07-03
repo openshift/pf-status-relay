@@ -10,8 +10,8 @@ import (
 	"github.com/vishvananda/netlink"
 	"go.uber.org/mock/gomock"
 
-	"github.com/mlguerrero12/pf-status-relay/pkg/interfaces"
-	"github.com/mlguerrero12/pf-status-relay/pkg/lacp/pf"
+	"github.com/openshift/pf-status-relay/pkg/interfaces"
+	"github.com/openshift/pf-status-relay/pkg/lacp/pf"
 )
 
 var _ = Describe("LACP", func() {

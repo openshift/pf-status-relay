@@ -38,18 +38,12 @@ This application can be installed in a Kubernetes cluster using a DaemonSet and 
 
 #### Steps
 
-1. **Build or pull the container image**
+1. **Build container image**
 
-   First, you need to build the container image for the PF Status Relay application. You can do this by running the following command:
-
-   ```bash
-   podman build -t pf-status-relay .
-   ```
-
-    Alternatively, you can pull the container image with the latest version of the application from Quay.io:
+   First, you need to build the container image for the PF Status Relay application.
 
    ```bash
-   podman pull quay.io/marguerr/pf-status-relay
+   make image-build
    ```
 
 2. **Create a ConfigMap**
@@ -98,7 +92,7 @@ This application can be installed in a Kubernetes cluster using a DaemonSet and 
            node-role.kubernetes.io/worker: ""
          containers:
          - name: pf-status-relay
-           image: quay.io/marguerr/pf-status-relay
+           image: localhost:5000/pf-status-relay
            securityContext:
              privileged: true
            volumeMounts:

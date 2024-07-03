@@ -37,7 +37,7 @@ linters-settings:
     sections:
       - standard
       - default
-      - prefix(github.com/mlguerrero12)
+      - prefix(github.com/openshift)
 
 run:
   timeout: 5m
