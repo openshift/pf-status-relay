@@ -14,7 +14,7 @@ build:
 image-build:
 	$(OCI_BIN) build -t ${IMAGE_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG} -f Dockerfile .
 
-test-build:
+test-unit:
 	go test -v ./... -count=1
 
 go-lint-install:
