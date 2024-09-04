@@ -1,9 +1,9 @@
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.17 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.22-openshift-4.18 AS builder
 WORKDIR /src
 COPY . .
 RUN CGO_ENABLED=1 GOOS=linux go build -a -ldflags '-w' -o pf-status-relay cmd/pf-status-relay.go
 
-FROM registry.ci.openshift.org/ocp/4.17:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.18:base-rhel9
 LABEL io.k8s.display-name="SR-IOV PF Status Relay"
 LABEL io.k8s.description="This is a component of Openshift Container Platform that adjusts the link state of VFs based on the LACP status of the PFs."
 
