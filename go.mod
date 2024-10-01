@@ -7,7 +7,6 @@ require (
 	github.com/onsi/gomega v1.34.2
 	github.com/vishvananda/netlink v1.3.0
 	go.uber.org/mock v0.4.0
-	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
