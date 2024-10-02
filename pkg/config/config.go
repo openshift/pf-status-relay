@@ -1,14 +1,18 @@
 package config
 
 import (
+	"fmt"
 	"os"
-
-	"gopkg.in/yaml.v2"
+	"strconv"
+	"strings"
 
 	"github.com/openshift/pf-status-relay/pkg/log"
 )
 
-var path = "/etc/pf-status-relay/config.yaml"
+const (
+	pfStatusRelayPollingInterval = "PF_STATUS_RELAY_POLLING_INTERVAL"
+	pfStatusRelayInterfaces      = "PF_STATUS_RELAY_INTERFACES"
+)
 
 // Config contains the configuration of the application.
 type Config struct {
@@ -17,33 +21,38 @@ type Config struct {
 }
 
 // ReadConfig read yaml config file.
-func ReadConfig() Config {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		log.Log.Error("failed to read config file", "error", err)
-		os.Exit(1)
+func ReadConfig() (Config, error) {
+	c := Config{}
+
+	c.PollingInterval = 1000
+	raw, ok := os.LookupEnv(pfStatusRelayPollingInterval)
+	if ok && raw != "" {
+		pollingInterval, err := strconv.Atoi(raw)
+		if err != nil {
+			return c, fmt.Errorf("failed to convert polling interval to int: %w", err)
+		}
+
+		if pollingInterval < 100 {
+			return c, fmt.Errorf("polling interval must be greater than 100 - current value: %d", pollingInterval)
+		}
+
+		c.PollingInterval = pollingInterval
 	}
 
-	// Default values.
-	c := Config{
-		PollingInterval: 1000,
+	raw, ok = os.LookupEnv(pfStatusRelayInterfaces)
+	if !ok || raw == "" {
+		return c, fmt.Errorf("interfaces must be set")
 	}
 
-	err = yaml.Unmarshal(data, &c)
-	if err != nil {
-		log.Log.Error("failed to unmarshall config file", "error", err)
-		os.Exit(1)
+	pfs := strings.Split(raw, ",")
+	for i := range pfs {
+		pf := strings.TrimSpace(pfs[i])
+		if pf != "" {
+			c.Interfaces = append(c.Interfaces, pf)
+		}
 	}
 
-	if c.Interfaces == nil {
-		log.Log.Error("failed to parse config file", "error", "no interfaces provided")
-		os.Exit(1)
-	}
+	log.Log.Info("interfaces to monitor", "interfaces", c.Interfaces)
 
-	if c.PollingInterval < 100 {
-		log.Log.Error("failed to parse config file", "error", "polling interval must be greater or equal to 100")
-		os.Exit(1)
-	}
-
-	return c
+	return c, nil
 }

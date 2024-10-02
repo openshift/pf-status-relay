@@ -19,9 +19,9 @@ When the LACP flags are not "Distributing", "Collecting", "Synchronization", and
 For proper functionality, there must be a Linux bond for each PF that will be monitored (bond with a single slave), and the bond mode must be set to 802.3ad. If these conditions are not met, the application will not monitor or relay the LACP state. Additionally, LACP fast rate is expected to be used.
 
 ## Configuration
-The application is configured using a YAML file located in `"/etc/pf-status-relay/config.yaml"`. The configuration file contains the following fields:
-- `interfaces`: A list of interfaces to monitor.
-- `pollingInterval`: The polling interval in milliseconds at which the application checks the LACP status. The default value is 1000 milliseconds.
+The application is configured using the following environment variables:
+- `PF_STATUS_RELAY_INTERFACES`: A comma separated list of interfaces to monitor (i.e. "eth0,eth1").
+- `PF_STATUS_RELAY_POLLING_INTERVAL`: The polling interval in milliseconds at which the application checks the LACP status. The default value is 1000 milliseconds.
 
 ## Usage
 
@@ -34,7 +34,7 @@ The application is configured using a YAML file located in `"/etc/pf-status-rela
 
 ### Installation
 
-This application can be installed in a Kubernetes cluster using a DaemonSet and a ConfigMap.
+This application can be installed in a Kubernetes cluster using a DaemonSet.
 
 #### Steps
 
@@ -46,27 +46,7 @@ This application can be installed in a Kubernetes cluster using a DaemonSet and 
    make image-build
    ```
 
-2. **Create a ConfigMap**
-
-   First, you need to create a ConfigMap that contains the configuration for the PF Status Relay application. Here's an example:
-
-   ```yaml
-   apiVersion: v1
-   kind: ConfigMap
-   metadata:
-     annotations:
-     name: pf-status-relay-config
-     namespace: default
-   data:
-     config.yaml: |
-       interfaces:
-         - eno12409
-         - ens6f0np0
-         - ens6f1np1
-       pollingInterval: 500
-   ```
-
-3. **Create a DaemonSet**
+2. **Create a DaemonSet**
 
    Finally, you need to create a DaemonSet that runs the PF Status Relay application on each node in your cluster. Here's an example:
 
@@ -93,16 +73,13 @@ This application can be installed in a Kubernetes cluster using a DaemonSet and 
          containers:
          - name: pf-status-relay
            image: localhost:5000/pf-status-relay
+           env:
+           - name: PF_STATUS_RELAY_INTERFACES
+             value: "eno12409,ens6f0np0,ens6f1np1"
+           - name: PF_STATUS_RELAY_POLLING_INTERVAL
+             value: "500"
            securityContext:
              privileged: true
-           volumeMounts:
-             - name: config
-               mountPath: /etc/pf-status-relay/config.yaml
-               subPath: config.yaml
-         volumes:
-         - name: config
-           configMap:
-             name: pf-status-relay-config
    ```
 
 ### Running the application

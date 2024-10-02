@@ -23,7 +23,11 @@ func main() {
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	// Read config file.
-	conf := config.ReadConfig()
+	conf, err := config.ReadConfig()
+	if err != nil {
+		log.Log.Error("failed to read config file", "error", err)
+		os.Exit(1)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -46,7 +50,7 @@ func main() {
 	pfs.Monitor(ctx, &wg)
 
 	// Start subscription to link changes.
-	err := subscribe.Start(ctx, pfs.Indexes(), queue, &wg)
+	err = subscribe.Start(ctx, pfs.Indexes(), queue, &wg)
 	if err != nil {
 		log.Log.Error("failed to subscribe to link changes", "error", err)
 	}
