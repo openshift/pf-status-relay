@@ -8,7 +8,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.37.0
 	github.com/vishvananda/netlink v1.3.0
-	go.uber.org/mock v0.5.1
+	go.uber.org/mock v0.5.2
 )
 
 require (
