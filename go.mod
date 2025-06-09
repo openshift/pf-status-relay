@@ -1,6 +1,6 @@
 module github.com/openshift/pf-status-relay
 
-go 1.22
+go 1.22.0
 
 require (
 	github.com/onsi/ginkgo v1.16.5
