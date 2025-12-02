@@ -149,6 +149,11 @@ func (i *Nics) Monitor(ctx context.Context, wg *sync.WaitGroup) {
 							return
 						}
 
+						// Log when VFs are detected after NoVfs state.
+						if p.ProtoState == pf.NoVfs {
+							log.Log.Info("VFs detected on interface", "interface", p.Name, "count", len(vfs))
+						}
+
 						// Check lacp state.
 						slave := link.Attrs().Slave
 						if slave != nil {
