@@ -1,6 +1,8 @@
 module github.com/openshift/pf-status-relay
 
-go 1.26.4
+go 1.26.0
+
+toolchain go1.26.3
 
 require (
 	github.com/google/go-cmp v0.7.0
