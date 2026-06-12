@@ -16,11 +16,3 @@ image-build:
 
 test-unit:
 	go test -v ./... -count=1
-
-go-lint-install:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-
-go-lint: go-lint-install
-	go mod tidy
-	go fmt ./...
-	golangci-lint run --color always -v ./...
